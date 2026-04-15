@@ -1,0 +1,8 @@
+{
+  "name": "trading-signals",
+  "version": "1.0.0",
+  "description": "Professional trading signal dashboard",
+  "engines": {
+    "node": "18.x"
+  }
+}

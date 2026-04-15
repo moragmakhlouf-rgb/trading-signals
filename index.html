@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TradeSignal Pro</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+</head>
+<body>
+
+<!-- ── Header ─────────────────────────────────────────────────────────────── -->
+<header>
+  <div class="logo">TradeSignal <span>Pro</span></div>
+  <div class="search-bar">
+    <input
+      id="symbolInput"
+      type="text"
+      placeholder="Enter ticker: AAPL, BTC-USD, EURUSD=X, ES=F, GC=F…"
+      autocomplete="off"
+      spellcheck="false"
+    >
+    <button id="analyzeBtn" class="btn-primary">Analyze</button>
+  </div>
+</header>
+
+<!-- ── Loading ────────────────────────────────────────────────────────────── -->
+<div id="loading" class="hidden">
+  <div class="spinner"></div>
+  <p>Fetching market data &amp; computing indicators…</p>
+</div>
+
+<!-- ── Error ──────────────────────────────────────────────────────────────── -->
+<div id="errorMsg" class="hidden"></div>
+
+<!-- ── Dashboard ──────────────────────────────────────────────────────────── -->
+<div id="dashboard" class="hidden">
+
+  <!-- Row 1: Signal Card + Chart -->
+  <div class="row-top">
+
+    <!-- Signal Card -->
+    <div class="signal-card" id="signalCard">
+      <div class="signal-ticker">
+        <strong id="tickerSymbol">—</strong>&nbsp;
+        <span id="tickerName"></span><br>
+        <span id="exchangeName" class="muted"></span>&nbsp;·&nbsp;<span id="currency" class="muted"></span>
+      </div>
+
+      <div class="signal-main">
+        <div class="signal-label" id="signalLabel">—</div>
+        <div class="signal-price" id="currentPrice">—</div>
+        <div id="priceChange">—</div>
+      </div>
+
+      <div class="conf-section">
+        <div class="conf-label">
+          <span>Confidence</span>
+          <span class="conf-val" id="confidenceValue">—</span>
+        </div>
+        <div class="conf-track">
+          <div class="conf-fill" id="confBar" style="width:0%"></div>
+        </div>
+      </div>
+
+      <div class="vote-row">
+        <div class="vote-chip vc-buy">
+          <span class="vnum" id="buyCount">—</span>
+          BUY
+        </div>
+        <div class="vote-chip vc-neu">
+          <span class="vnum" id="neutralCount">—</span>
+          NEUTRAL
+        </div>
+        <div class="vote-chip vc-sell">
+          <span class="vnum" id="sellCount">—</span>
+          SELL
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart -->
+    <div class="chart-card">
+      <div class="card-title">Price Chart — Candlestick · EMA50 (blue) · EMA200 (amber)</div>
+      <div id="chartContainer"></div>
+    </div>
+  </div>
+
+  <!-- SL/TP Row -->
+  <div class="card" style="margin-bottom:16px" id="sltpPanel">
+    <div class="card-title">Stop Loss &amp; Take Profit Levels</div>
+    <div class="sltp-grid">
+      <div class="sltp-item sl-item">
+        <div class="sltp-label">Stop Loss</div>
+        <div class="sltp-val" id="slPrice">—</div>
+        <div class="sltp-sub">Risk: <span id="riskUnit">—</span> per unit&nbsp;(<span id="slPct">—</span>)</div>
+      </div>
+      <div class="sltp-item entry-item">
+        <div class="sltp-label">Entry Price</div>
+        <div class="sltp-val" id="entryPrice">—</div>
+        <div class="sltp-sub">Current close</div>
+      </div>
+      <div class="sltp-item tp1-item">
+        <div class="sltp-label">TP 1</div>
+        <div class="sltp-val" id="tp1Price">—</div>
+        <div class="sltp-sub">R:R <span id="rr1">—</span></div>
+      </div>
+      <div class="sltp-item tp2-item">
+        <div class="sltp-label">TP 2 (S/R)</div>
+        <div class="sltp-val" id="tp2Price">—</div>
+        <div class="sltp-sub">R:R <span id="rr2">—</span></div>
+      </div>
+      <div class="sltp-item tp3-item">
+        <div class="sltp-label">TP 3 Extended</div>
+        <div class="sltp-val" id="tp3Price">—</div>
+        <div class="sltp-sub">Swing-level target</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Indicators + Position Sizing -->
+  <div class="row-mid">
+
+    <!-- Indicator Table -->
+    <div class="card">
+      <div class="card-title">Technical Indicators (20)</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Indicator</th>
+              <th>Signal</th>
+              <th>Value</th>
+              <th>Interpretation</th>
+            </tr>
+          </thead>
+          <tbody id="indicatorBody">
+            <tr><td colspan="4" class="muted" style="text-align:center;padding:24px">Run an analysis to see results</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Position Sizing -->
+    <div class="card">
+      <div class="card-title">Position Sizing</div>
+      <div class="pos-inputs">
+        <div class="pos-field">
+          <label>Account Size ($)</label>
+          <input id="accountSize" type="number" value="10000" min="1" step="100">
+        </div>
+        <div class="pos-field">
+          <label>Risk per Trade (%)</label>
+          <input id="riskPct" type="number" value="1" min="0.1" max="20" step="0.1">
+        </div>
+      </div>
+      <div class="pos-results">
+        <div class="pos-row">
+          <span class="pl">Risk Amount</span>
+          <span class="pv" id="psRiskAmt">—</span>
+        </div>
+        <div class="pos-row">
+          <span class="pl">Risk per Unit</span>
+          <span class="pv" id="psRiskPerUnit">—</span>
+        </div>
+        <div class="pos-row">
+          <span class="pl">Position Size (units)</span>
+          <span class="pv" id="psUnits">—</span>
+        </div>
+        <div class="pos-row">
+          <span class="pl">Notional Value</span>
+          <span class="pv" id="psNotional">—</span>
+        </div>
+        <div class="pos-row">
+          <span class="pl">% of Account</span>
+          <span class="pv" id="psAcctPct">—</span>
+        </div>
+        <div class="pos-row">
+          <span class="pl">Kelly % (ref.)</span>
+          <span class="pv" id="psKelly">—</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Hedge + Correlation -->
+  <div class="row-bot">
+
+    <!-- Hedge Panel -->
+    <div class="card">
+      <div class="card-title">Hedge &amp; Futures Suggestion</div>
+      <div id="hedgeContent">
+        <p class="muted">Run analysis to see hedge recommendations.</p>
+      </div>
+    </div>
+
+    <!-- Correlation Matrix -->
+    <div class="card">
+      <div class="card-title">Correlation with Major Indices</div>
+      <div class="corr-toggle">
+        <input type="radio" name="corrRange" id="cr1" value="1mo">
+        <label for="cr1">1 Month</label>
+        <input type="radio" name="corrRange" id="cr2" value="2mo">
+        <label for="cr2">2 Months</label>
+        <input type="radio" name="corrRange" id="cr3" value="3mo" checked>
+        <label for="cr3">3 Months</label>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Index</th>
+              <th>Pearson r</th>
+              <th style="width:120px">Strength</th>
+              <th>Label</th>
+            </tr>
+          </thead>
+          <tbody id="corrBody">
+            <tr><td colspan="4" class="muted" style="text-align:center;padding:24px">Run analysis to see correlations</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <p style="text-align:center;color:var(--muted);font-size:11px;margin-bottom:24px">
+    TradeSignal Pro is for educational and informational purposes only. Not financial advice. Past performance does not guarantee future results.
+  </p>
+
+</div><!-- end #dashboard -->
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
