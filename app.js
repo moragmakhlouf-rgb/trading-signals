@@ -6,7 +6,7 @@ import {
   calcATR, calcADX, calcWilliamsR,
   calcCCI, calcOBV, calcMFI,
   calcParabolicSAR, calcROC, calcCMF,
-  calcIchimoku, calcVWAP, calcSupportResistance,
+    calcIchimoku, calcSupportResistance,
   emaArray
 } from './indicators.js';
 
@@ -134,7 +134,6 @@ async function analyze() {
       roc:      calcROC(closes),
       cmf:      calcCMF(highs, lows, closes, volumes),
       ichimoku: calcIchimoku(highs, lows, closes),
-      vwap:     calcVWAP(highs, lows, closes, volumes),
       sr:       calcSupportResistance(highs, lows, closes),
     };
 
